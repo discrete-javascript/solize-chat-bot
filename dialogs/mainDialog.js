@@ -4,12 +4,26 @@
 const { TimexProperty } = require('@microsoft/recognizers-text-data-types-timex-expression');
 const { MessageFactory, InputHints } = require('botbuilder');
 const { LuisRecognizer } = require('botbuilder-ai');
-const { ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog } = require('botbuilder-dialogs');
+const {
+    ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog, AttachmentPrompt,
+    ChoiceFactory,
+    ChoicePrompt,
+    ConfirmPrompt,
+    NumberPrompt,
+    ThisMemoryScope
+} = require('botbuilder-dialogs'); ;
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 
+const EMAIL_PROMPT = 'EMAIL_PROMPT';
+const CHOICE_PROMPT = 'CHOICE_PROMPT';
+const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
+const NAME_PROMPT = 'NAME_PROMPT';
+
+const { emailValidator, nameValidator } = require('./validators');
+
 class MainDialog extends ComponentDialog {
-    constructor(luisRecognizer, bookingDialog) {
+    constructor(luisRecognizer, bookingDialog, feedbackDialog) {
         super('MainDialog');
 
         if (!luisRecognizer) throw new Error('[MainDialog]: Missing parameter \'luisRecognizer\' is required');
@@ -17,15 +31,28 @@ class MainDialog extends ComponentDialog {
 
         if (!bookingDialog) throw new Error('[MainDialog]: Missing parameter \'bookingDialog\' is required');
 
+        if (!feedbackDialog) throw new Error('[MainDialog]: Missing parameter \'feedbackDialog\' is required');
+
         // Define the main dialog and its related components.
         // This is a sample "book a flight" dialog.
-        this.addDialog(new TextPrompt('TextPrompt'))
-            .addDialog(bookingDialog)
-            .addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
-                this.introStep.bind(this),
-                this.actStep.bind(this),
-                this.finalStep.bind(this)
-            ]));
+        this.addDialog(new TextPrompt(NAME_PROMPT, nameValidator));
+        this.addDialog(new TextPrompt(EMAIL_PROMPT, emailValidator));
+        this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
+        this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT));
+        this.addDialog(new TextPrompt('TextPrompt'));
+        this.addDialog(bookingDialog);
+        this.addDialog(feedbackDialog);
+
+        this.addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
+            // this.nameStep.bind(this),
+            // this.emailStep.bind(this),
+            this.nameAndEmailConfirmStep.bind(this),
+            this.selectSolizeServices.bind(this)
+            // this.introStep.bind(this),
+            // this.actStep.bind(this),
+            // this.finalStep.bind(this)
+        ])
+        );
 
         this.initialDialogId = MAIN_WATERFALL_DIALOG;
     }
@@ -52,6 +79,78 @@ class MainDialog extends ComponentDialog {
      * Currently, this expects a booking request, like "book me a flight from Paris to Berlin on march 22"
      * Note that the sample LUIS model will only recognize Paris, Berlin, New York and London as airport cities.
      */
+    async nameStep(step) {
+        console.log(step.values, step.result);
+        // step.values.transport = step.result.value;
+        const promptOptions = { prompt: 'Please enter your name.', retryPrompt: 'Please enter a valid name' };
+        return await step.prompt(NAME_PROMPT, promptOptions);
+    }
+
+    async nameValidator(promptContext) {
+        var regex = /^[a-zA-Z ]{2,30}$/;
+        return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
+    }
+
+    async emailStep(step) {
+        step.values.name = step.result;
+        console.log(step.values);
+        const promptOptions = { prompt: 'Please enter your email id.', retryPrompt: 'Please enter a valid email' };
+        return await step.prompt(EMAIL_PROMPT, promptOptions);
+    }
+
+    // async emailValidator(promptContext) {
+    //     var regex = /^(([^<>()\\[\]\\.,;:\s@"]+(\.[^<>()\\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    //     return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
+    // }
+
+    async nameAndEmailConfirmStep(step) {
+        // step.values.name = step.result;
+        step.values.email = step.result;
+
+        // We can send messages to the user at any point in the WaterfallStep.
+        await step.context.sendActivity(`Thanks ${ step.values.name } and your email id is ${ step.values.email }.`);
+
+        await step.context.sendActivity(`OK! Before we get you started, here are few rules.
+        If you wish to start from the beginning, type "Start".
+        If you wish to end session, type "End".
+        Don't forget, there's always an option to call our SOLIZE agent if you would like to talk directly.`);
+
+        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
+        return await step.prompt(CHOICE_PROMPT, {
+            prompt: 'Please choose which SOLIZE service you are interested in.',
+            choices: ChoiceFactory.toChoices(['Staffing', 'Feedback', 'Other'])
+        });
+    }
+
+    async selectSolizeServices(step) {
+        step.values.service = step.result.value;
+
+        switch (step.result.value) {
+        case 'Staffing':
+            await step.beginDialog('bookingDialog', {});
+            break;
+        case 'Feedback':
+            await step.context.sendActivity('Do you already have a Feedbckd?');
+            return await step.beginDialog('feedbackDialog', {});
+            // break;
+
+        default:
+            break;
+        }
+
+        return await step.next();
+    }
+
+    async nameConfirmStep(step) {
+        // step.values.name = step.result;
+
+        // We can send messages to the user at any point in the WaterfallStep.
+        await step.context.sendActivity(`Thanks ${ step.result }.`);
+
+        // WaterfallStep always finishes with the end of the Waterfall or with another dialog; here it is a Prompt Dialog.
+        return await step.prompt(CONFIRM_PROMPT, 'Do you want to give your age?', ['yes', 'no']);
+    }
+
     async introStep(stepContext) {
         if (!this.luisRecognizer.isConfigured) {
             const messageText = 'NOTE: LUIS is not configured. To enable all capabilities, add `LuisAppId`, `LuisAPIKey` and `LuisAPIHostName` to the .env file.';
@@ -61,7 +160,7 @@ class MainDialog extends ComponentDialog {
 
         const messageText = stepContext.options.restartMsg ? stepContext.options.restartMsg : 'What can I help you with today?\nSay something like "Book a flight from Paris to Berlin on March 22, 2020"';
         const promptMessage = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
-        return await stepContext.prompt('TextPrompt', { prompt: promptMessage });
+        return await stepContext.prompt(NAME_PROMPT, { prompt: promptMessage });
     }
 
     /**
