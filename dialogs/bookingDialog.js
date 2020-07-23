@@ -83,7 +83,7 @@ class BookingDialog extends CancelAndHelpDialog {
 
         // Capture the results of the previous step
         bookingDetails.travelDate = stepContext.result;
-        const messageText = `Please confirm, I have you traveling to: ${ bookingDetails.destination } from: ${ bookingDetails.origin } on: ${ bookingDetails.travelDate }. Is this correct?`;
+        const messageText = `Please confirm, I have you travel to: ${ bookingDetails.destination } from: ${ bookingDetails.origin } on: ${ bookingDetails.travelDate }. Is this correct?`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
 
         // Offer a YES/NO prompt.
