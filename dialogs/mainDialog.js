@@ -1,16 +1,11 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
 const { TimexProperty } = require('@microsoft/recognizers-text-data-types-timex-expression');
 const { MessageFactory, InputHints } = require('botbuilder');
 const { LuisRecognizer } = require('botbuilder-ai');
 const {
-    ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog, AttachmentPrompt,
+    ComponentDialog, DialogSet, DialogTurnStatus, TextPrompt, WaterfallDialog,
     ChoiceFactory,
     ChoicePrompt,
-    ConfirmPrompt,
-    NumberPrompt,
-    ThisMemoryScope
+    ConfirmPrompt
 } = require('botbuilder-dialogs'); ;
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
@@ -21,20 +16,19 @@ const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const NAME_PROMPT = 'NAME_PROMPT';
 
 const { emailValidator, nameValidator } = require('./validators');
+const { FEEDBACK_DIALOG, STAFFING_DIALOG } = require('./dialogConstants');
 
 class MainDialog extends ComponentDialog {
-    constructor(luisRecognizer, bookingDialog, feedbackDialog) {
+    constructor(luisRecognizer, bookingDialog, feedbackDialog, staffingDialog) {
         super('MainDialog');
 
         if (!luisRecognizer) throw new Error('[MainDialog]: Missing parameter \'luisRecognizer\' is required');
         this.luisRecognizer = luisRecognizer;
 
-        if (!bookingDialog) throw new Error('[MainDialog]: Missing parameter \'bookingDialog\' is required');
-
         if (!feedbackDialog) throw new Error('[MainDialog]: Missing parameter \'feedbackDialog\' is required');
 
-        // Define the main dialog and its related components.
-        // This is a sample "book a flight" dialog.
+        if (!staffingDialog) throw new Error('[MainDialog]: Missing parameter \'staffingDialog\' is required');
+
         this.addDialog(new TextPrompt(NAME_PROMPT, nameValidator));
         this.addDialog(new TextPrompt(EMAIL_PROMPT, emailValidator));
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
@@ -42,15 +36,13 @@ class MainDialog extends ComponentDialog {
         this.addDialog(new TextPrompt('TextPrompt'));
         this.addDialog(bookingDialog);
         this.addDialog(feedbackDialog);
+        this.addDialog(staffingDialog);
 
         this.addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
-            // this.nameStep.bind(this),
-            // this.emailStep.bind(this),
+            this.nameStep.bind(this),
+            this.emailStep.bind(this),
             this.nameAndEmailConfirmStep.bind(this),
             this.selectSolizeServices.bind(this)
-            // this.introStep.bind(this),
-            // this.actStep.bind(this),
-            // this.finalStep.bind(this)
         ])
         );
 
@@ -74,21 +66,11 @@ class MainDialog extends ComponentDialog {
         }
     }
 
-    /**
-     * First step in the waterfall dialog. Prompts the user for a command.
-     * Currently, this expects a booking request, like "book me a flight from Paris to Berlin on march 22"
-     * Note that the sample LUIS model will only recognize Paris, Berlin, New York and London as airport cities.
-     */
     async nameStep(step) {
         console.log(step.values, step.result);
         // step.values.transport = step.result.value;
         const promptOptions = { prompt: 'Please enter your name.', retryPrompt: 'Please enter a valid name' };
         return await step.prompt(NAME_PROMPT, promptOptions);
-    }
-
-    async nameValidator(promptContext) {
-        var regex = /^[a-zA-Z ]{2,30}$/;
-        return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
     }
 
     async emailStep(step) {
@@ -97,11 +79,6 @@ class MainDialog extends ComponentDialog {
         const promptOptions = { prompt: 'Please enter your email id.', retryPrompt: 'Please enter a valid email' };
         return await step.prompt(EMAIL_PROMPT, promptOptions);
     }
-
-    // async emailValidator(promptContext) {
-    //     var regex = /^(([^<>()\\[\]\\.,;:\s@"]+(\.[^<>()\\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    //     return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
-    // }
 
     async nameAndEmailConfirmStep(step) {
         // step.values.name = step.result;
@@ -127,18 +104,18 @@ class MainDialog extends ComponentDialog {
 
         switch (step.result.value) {
         case 'Staffing':
-            await step.beginDialog('bookingDialog', {});
-            break;
+            return await step.beginDialog(STAFFING_DIALOG, {});
+
         case 'Feedback':
             await step.context.sendActivity('Do you already have a Feedbckd?');
-            return await step.beginDialog('feedbackDialog', {});
+            return await step.beginDialog(FEEDBACK_DIALOG, {});
             // break;
 
         default:
             break;
         }
 
-        return await step.next();
+        // return await step.next();
     }
 
     async nameConfirmStep(step) {
