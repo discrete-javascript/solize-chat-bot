@@ -11,15 +11,16 @@ const GET_JD_PROMPT = 'GET_JD_PROMPT';
 
 const UPLOAD_PROMPT = 'UPLOAD_PROMPT';
 
-const { STAFFING_DIALOG, HAS_JD_DIALOG } = require('./dialogConstants');
+const { STAFFING_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG } = require('./dialogConstants');
 
 class StaffingDialog extends ComponentDialog {
-    constructor(id, hasJDDialog, contactDialog) {
+    constructor(id, hasJDDialog, contactDialog, noJDDialog) {
         super(id || STAFFING_DIALOG);
 
         this.addDialog(new AttachmentPrompt(UPLOAD_PROMPT, this.picturePromptValidator));
         this.addDialog(new ChoicePrompt(GET_JD_PROMPT));
         this.addDialog(hasJDDialog);
+        this.addDialog(noJDDialog);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.jobDescriptionStep.bind(this),
@@ -44,15 +45,15 @@ class StaffingDialog extends ComponentDialog {
 
     async toggleJDSteps(stepContext) {
         stepContext.values.isJDPresent = stepContext.result.value;
-        console.log(stepContext.result);
+        console.log(stepContext.options);
 
         switch (stepContext.values.isJDPresent) {
         case 'Yes':
             return stepContext.beginDialog(HAS_JD_DIALOG);
             // return stepContext.context.sendActivity('Thanks! We will look into the job description.');
 
-        default:
-            break;
+        case 'No':
+            return stepContext.beginDialog(NO_JD_DIALOG, { ...stepContext.options });
         }
     }
 }

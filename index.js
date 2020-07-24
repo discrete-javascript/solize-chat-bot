@@ -16,20 +16,20 @@ const restify = require('restify');
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const { BotFrameworkAdapter, ConversationState, InputHints, MemoryStorage, UserState } = require('botbuilder');
 
-const { FlightBookingRecognizer } = require('./dialogs/flightBookingRecognizer');
+const { LuisRecognizerDialog } = require('./dialogs/luisRegonizerDialog');
 
 // This bot's main dialog.
 const { DialogAndWelcomeBot } = require('./bots/dialogAndWelcomeBot');
 const { MainDialog } = require('./dialogs/mainDialog');
 
 // the bot's booking dialog
-const { BookingDialog } = require('./dialogs/bookingDialog');
 const { FeedbackDialog } = require('./dialogs/feedbackDialog');
 const { StaffingDialog } = require('./dialogs/staffingDialog');
 const { ContactDialog } = require('./dialogs/contactDialog');
 
-const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG } = require('./dialogs/dialogConstants');
+const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG } = require('./dialogs/dialogConstants');
 const { HasJDDialog } = require('./dialogs/hasJDDialog');
+const { NoJDDialog } = require('./dialogs/noJDDialog');
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
@@ -78,15 +78,15 @@ const userState = new UserState(memoryStorage);
 const { LuisAppId, LuisAPIKey, LuisAPIHostName } = process.env;
 const luisConfig = { applicationId: LuisAppId, endpointKey: LuisAPIKey, endpoint: `https://${ LuisAPIHostName }` };
 
-const luisRecognizer = new FlightBookingRecognizer(luisConfig);
+const luisRecognizer = new LuisRecognizerDialog(luisConfig);
 
 const contactDialog = new ContactDialog(CONTACT_DIALOG);
 // Create the main dialog.
-const bookingDialog = new BookingDialog('bookingDialog');
+const noJDDialog = new NoJDDialog(NO_JD_DIALOG);
 const feedbackDialog = new FeedbackDialog(FEEDBACK_DIALOG, contactDialog);
 const hasJDDialog = new HasJDDialog(HAS_JD_DIALOG, contactDialog);
-const staffingDialog = new StaffingDialog(STAFFING_DIALOG, hasJDDialog, contactDialog);
-const dialog = new MainDialog(luisRecognizer, bookingDialog, feedbackDialog, staffingDialog);
+const staffingDialog = new StaffingDialog(STAFFING_DIALOG, hasJDDialog, contactDialog, noJDDialog);
+const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog);
 const bot = new DialogAndWelcomeBot(conversationState, userState, dialog);
 
 // Create HTTP server
