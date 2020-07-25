@@ -11,7 +11,7 @@ class DialogAndWelcomeBot extends DialogBot {
             const membersAdded = context.activity.membersAdded;
             for (let cnt = 0; cnt < membersAdded.length; cnt++) {
                 if (membersAdded[cnt].id !== context.activity.recipient.id) {
-                    await context.sendActivity('Hi! This is SOLIZE assistant bot.仮)We assist you in fast staffing placements. (今後のMenuの在り方によっても変更検討。)');
+                    await context.sendActivity('Hi! This is SOLIZE assistant bot. We assist you in fast staffing placements.');
                     await dialog.run(context, conversationState.createProperty('DialogState'));
                 }
             }

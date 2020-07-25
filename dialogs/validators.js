@@ -8,4 +8,9 @@ const nameValidator = async (promptContext) => {
     return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
 };
 
-module.exports = { emailValidator, nameValidator };
+const phoneNumberValidator = async (promptContext) => {
+    var regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
+};
+
+module.exports = { emailValidator, nameValidator, phoneNumberValidator };

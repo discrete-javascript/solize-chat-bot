@@ -11,8 +11,9 @@ const EMAIL_PROMPT = 'EMAIL_PROMPT';
 const CHOICE_PROMPT = 'CHOICE_PROMPT';
 const CONFIRM_PROMPT = 'CONFIRM_PROMPT';
 const NAME_PROMPT = 'NAME_PROMPT';
+const PHONENUMBER_PROMPT = 'PHONENUMBER_PROMPT';
 
-const { emailValidator, nameValidator } = require('./validators');
+const { emailValidator, nameValidator, phoneNumberValidator } = require('./validators');
 const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
 
 class MainDialog extends ComponentDialog {
@@ -28,6 +29,7 @@ class MainDialog extends ComponentDialog {
 
         this.addDialog(new TextPrompt(NAME_PROMPT, nameValidator));
         this.addDialog(new TextPrompt(EMAIL_PROMPT, emailValidator));
+        this.addDialog(new TextPrompt(PHONENUMBER_PROMPT, phoneNumberValidator));
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
         this.addDialog(new ConfirmPrompt(CONFIRM_PROMPT));
         this.addDialog(new TextPrompt('TextPrompt'));
@@ -39,6 +41,7 @@ class MainDialog extends ComponentDialog {
             this.startStep.bind(this),
             this.nameStep.bind(this),
             this.emailStep.bind(this),
+            this.phoneNumberStep.bind(this),
             this.nameAndEmailConfirmStep.bind(this),
             this.selectSolizeServices.bind(this)
         ])
@@ -66,7 +69,7 @@ class MainDialog extends ComponentDialog {
 
     async startStep(step) {
         return await step.prompt(CHOICE_PROMPT, {
-            prompt: 'You start chatting by pressing \'Start\'',
+            prompt: 'You can start chatting by pressing \'Start\' button below',
             choices: ChoiceFactory.toChoices(['Start'])
         });
     }
@@ -74,20 +77,27 @@ class MainDialog extends ComponentDialog {
     async nameStep(step) {
         console.log(step.values, step.result);
         // step.values.transport = step.result.value;
-        const promptOptions = { prompt: 'Please enter your name.', retryPrompt: 'Please enter a valid name' };
+        const promptOptions = { prompt: 'Please enter your name.', retryPrompt: 'Please enter a valid name.' };
         return await step.prompt(NAME_PROMPT, promptOptions);
     }
 
     async emailStep(step) {
         step.values.name = step.result;
         console.log(step.values);
-        const promptOptions = { prompt: 'Please enter your email id.', retryPrompt: 'Please enter a valid email' };
+        const promptOptions = { prompt: 'Please enter your email id.', retryPrompt: 'Please enter a valid email.' };
         return await step.prompt(EMAIL_PROMPT, promptOptions);
+    }
+
+    async phoneNumberStep(step) {
+        step.values.email = step.result;
+        console.log(step.values);
+        const promptOptions = { prompt: 'Please enter your phone number.', retryPrompt: 'Please enter a valid phone number.' };
+        return await step.prompt(PHONENUMBER_PROMPT, promptOptions);
     }
 
     async nameAndEmailConfirmStep(step) {
         // step.values.name = step.result;
-        step.values.email = step.result;
+        step.values.phoneNumber = step.result;
 
         // We can send messages to the user at any point in the WaterfallStep.
         await step.context.sendActivity(`Thanks ${ step.values.name } and your email id is ${ step.values.email }.`);
@@ -109,13 +119,13 @@ class MainDialog extends ComponentDialog {
 
         switch (step.result.value) {
         case 'Staffing':
-            return await step.beginDialog(STAFFING_DIALOG, { name: step.values.name });
+            return await step.beginDialog(STAFFING_DIALOG, { ...step.values });
 
         case 'Feedback':
-            return await step.beginDialog(FEEDBACK_DIALOG, {});
+            return await step.beginDialog(FEEDBACK_DIALOG, { ...step.values });
 
         case 'Other':
-            return await step.beginDialog(CONTACT_DIALOG, {});
+            return await step.beginDialog(CONTACT_DIALOG, { ...step.values });
         }
     }
 }
