@@ -36,6 +36,7 @@ class MainDialog extends ComponentDialog {
         this.addDialog(contactDialog);
 
         this.addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
+            this.startStep.bind(this),
             this.nameStep.bind(this),
             this.emailStep.bind(this),
             this.nameAndEmailConfirmStep.bind(this),
@@ -61,6 +62,13 @@ class MainDialog extends ComponentDialog {
         if (results.status === DialogTurnStatus.empty) {
             await dialogContext.beginDialog(this.id);
         }
+    }
+
+    async startStep(step) {
+        return await step.prompt(CHOICE_PROMPT, {
+            prompt: 'You start chatting by pressing \'Start\'',
+            choices: ChoiceFactory.toChoices(['Start'])
+        });
     }
 
     async nameStep(step) {
