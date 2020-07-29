@@ -1,9 +1,3 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-
-// index.js is used to setup and configure your bot
-
-// Import required packages
 const path = require('path');
 
 // Note: Ensure you have a .env file and include LuisAppId, LuisAPIKey and LuisAPIHostName.
@@ -15,6 +9,8 @@ const restify = require('restify');
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const { BotFrameworkAdapter, ConversationState, InputHints, MemoryStorage, UserState } = require('botbuilder');
+const { callDB } = require('./db/db');
+const { SchemaDB } = require('./db/dbschema');
 
 const { LuisRecognizerDialog } = require('./dialogs/luisRegonizerDialog');
 

@@ -19,6 +19,7 @@ const PREFERRED_CONTACT_TIME = 'PREFERRED_CONTACT_TIME';
 const EXTRA_DIALOG_PROMPT = 'EXTRA_DIALOG_PROMPT';
 
 const { NO_JD_DIALOG } = require('./dialogConstants');
+const { callDB } = require('../db/db');
 
 class NoJDDialog extends ComponentDialog {
     constructor(id) {
@@ -26,10 +27,10 @@ class NoJDDialog extends ComponentDialog {
 
         this.addDialog(new ChoicePrompt(TYPE_OF_ENGINEER));
         this.addDialog(new TextPrompt(TYPE_OF_INDUSTRY));
-        this.addDialog(new TextPrompt(YEARS_OF_EXPERIENCE));
+        this.addDialog(new ChoicePrompt(YEARS_OF_EXPERIENCE));
         this.addDialog(new TextPrompt(REQUIRED_SKILLSET));
         this.addDialog(new TextPrompt(WORKPLACE_LOCATION));
-        this.addDialog(new TextPrompt(START_DATE));
+        this.addDialog(new ChoicePrompt(START_DATE));
         this.addDialog(new TextPrompt(OTHER_REQUIREMENTS));
         this.addDialog(new TextPrompt(PREFERRED_CONTACT_TIME));
         this.addDialog(new TextPrompt(EXTRA_DIALOG_PROMPT));
@@ -60,21 +61,39 @@ class NoJDDialog extends ComponentDialog {
     }
 
     async typeofIndustryStep(stepContext) {
-        stepContext.values.industry = stepContext.result;
+        stepContext.values.typeOfEngineer = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
+
         const messageText = 'Which industry - Automotive, Heavyindustry, offroad vehicles, robotics…';
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
         return await stepContext.prompt(TYPE_OF_INDUSTRY, { prompt: msg });
     }
 
     async yearsOfexperienceStep(stepContext) {
-        return await stepContext.prompt(TYPE_OF_ENGINEER, {
+        stepContext.values.typeOfIndustry = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
+        return await stepContext.prompt(YEARS_OF_EXPERIENCE, {
             prompt: 'How many years of experience is required?',
             choices: ChoiceFactory.toChoices(['0 -3 years', '3- 5 years', '5 - 7 years', '>7 years'])
         });
     }
 
     async requiredSkillsetStep(stepContext) {
-        stepContext.values.experience = stepContext.result;
+        stepContext.values.yearsExp = stepContext.result.value;
+        console.log(stepContext.result);
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = `What kind of Skillset/Tool Knowledge is required?
         Please select multiple skillsets if needed.
         You can also select "Other" and tell us if you have specific skillsets.`;
@@ -83,21 +102,37 @@ class NoJDDialog extends ComponentDialog {
     }
 
     async workLocationStep(stepContext) {
-        stepContext.values.experience = stepContext.result;
+        stepContext.values.extraSkillset = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = 'Can you tell us the location of the workplace? (Ex. City/State/Zipcode)';
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
         return await stepContext.prompt(WORKPLACE_LOCATION, { prompt: msg });
     }
 
     async startDateStep(stepContext) {
+        stepContext.values.workplaceLocation = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         return await stepContext.prompt(START_DATE, {
-            prompt: 'Do you already have a Start Date? When do you need the engineer to start working? - ASAP, within 2 weeks, within 1 month, undecided.',
+            prompt: 'Do you already have a Start Date? When do you need the engineer to start working?',
             choices: ChoiceFactory.toChoices(['ASAP', 'within 2 weeks', 'within 1 month', 'undecided'])
         });
     }
 
     async otherRequirementStep(stepContext) {
-        stepContext.values.experience = stepContext.result;
+        stepContext.values.startDate = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = `Can you tell us if you have any other requirements for the position?
         If not, please type "NA"`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
@@ -105,6 +140,12 @@ class NoJDDialog extends ComponentDialog {
     }
 
     async replyOtherRequirementStep(stepContext) {
+        stepContext.values.otherRequirement = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         await stepContext.context.sendActivity(`OK! That's all the questions. 
         We'll look into the information you have provided, and our SOLIZE agent will contact you shortly.`);
         return stepContext.next();
@@ -119,12 +160,17 @@ class NoJDDialog extends ComponentDialog {
     }
 
     async replyPreferredContactStep(stepContext) {
+        stepContext.values.preferredContact = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         await stepContext.context.sendActivity('Great!');
         return stepContext.next();
     }
 
     async extraDialogStep(stepContext) {
-        stepContext.values.experience = stepContext.result;
         const messageText = `Are there anything else we can assist you today?
         If you wish to start from the beginning, type "Start".
         If you wish to end session, type "End".
@@ -134,7 +180,8 @@ class NoJDDialog extends ComponentDialog {
     }
 
     async replyExtraDialogStep(stepContext) {
-        return await stepContext.context.sendActivity(`OK! Thank you ${ stepContext.options.name }. Have a great day!`);
+        await stepContext.context.sendActivity(`OK! Thank you ${ stepContext.options.name }. Have a great day!`);
+        return await stepContext.clearDialogStack();
     }
 }
 

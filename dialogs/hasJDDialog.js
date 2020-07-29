@@ -11,6 +11,7 @@ const GET_JD_PROMPT = 'GET_JD_PROMPT';
 const UPLOAD_PROMPT = 'UPLOAD_PROMPT';
 
 const { CONTACT_DIALOG, HAS_JD_DIALOG } = require('./dialogConstants');
+const { callDB } = require('../db/db');
 
 class HasJDDialog extends ComponentDialog {
     constructor(id, contactDialog) {
@@ -43,6 +44,7 @@ class HasJDDialog extends ComponentDialog {
 
     async printThanksStep(stepContext) {
         await stepContext.context.sendActivity('Thanks! We will look into the job description. ');
+        await callDB.updateItem({ ...stepContext.options, uploadFileLink: JSON.stringify(stepContext.result.value) });
         return stepContext.beginDialog(CONTACT_DIALOG);
     }
 

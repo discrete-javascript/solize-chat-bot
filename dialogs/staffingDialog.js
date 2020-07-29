@@ -12,6 +12,7 @@ const GET_JD_PROMPT = 'GET_JD_PROMPT';
 const UPLOAD_PROMPT = 'UPLOAD_PROMPT';
 
 const { STAFFING_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG } = require('./dialogConstants');
+const { callDB } = require('../db/db');
 
 class StaffingDialog extends ComponentDialog {
     constructor(id, hasJDDialog, contactDialog, noJDDialog) {
@@ -29,7 +30,7 @@ class StaffingDialog extends ComponentDialog {
 
         this.initialDialogId = WATERFALL_DIALOG;
 
-        this.choices = ['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'];
+        this.payload = {};
     }
 
     /**
@@ -44,16 +45,22 @@ class StaffingDialog extends ComponentDialog {
     }
 
     async toggleJDSteps(stepContext) {
-        stepContext.values.isJDPresent = stepContext.result.value;
-        console.log(stepContext.options);
+        stepContext.values.hasJd = stepContext.result.value;
 
-        switch (stepContext.values.isJDPresent) {
+        this.payload = {
+            ...stepContext.options,
+            ...stepContext.values
+        };
+
+        await callDB.updateItem({ ...this.payload });
+
+        switch (stepContext.values.hasJd) {
         case 'Yes':
-            return stepContext.beginDialog(HAS_JD_DIALOG);
+            return stepContext.beginDialog(HAS_JD_DIALOG, { ...this.payload });
             // return stepContext.context.sendActivity('Thanks! We will look into the job description.');
 
         case 'No':
-            return stepContext.beginDialog(NO_JD_DIALOG, { ...stepContext.options });
+            return stepContext.beginDialog(NO_JD_DIALOG, { ...this.payload });
         }
     }
 }

@@ -3,7 +3,8 @@ const {
     ChoiceFactory,
     ChoicePrompt,
     ConfirmPrompt
-} = require('botbuilder-dialogs'); ;
+} = require('botbuilder-dialogs');
+const { callDB } = require('../db/db');
 
 const MAIN_WATERFALL_DIALOG = 'mainWaterfallDialog';
 
@@ -15,6 +16,7 @@ const PHONENUMBER_PROMPT = 'PHONENUMBER_PROMPT';
 
 const { emailValidator, nameValidator, phoneNumberValidator } = require('./validators');
 const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
+const { SchemaDB } = require('../db/dbschema');
 
 class MainDialog extends ComponentDialog {
     constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog) {
@@ -46,6 +48,8 @@ class MainDialog extends ComponentDialog {
             this.selectSolizeServices.bind(this)
         ])
         );
+
+        this.payload = new SchemaDB();
 
         this.initialDialogId = MAIN_WATERFALL_DIALOG;
     }
@@ -101,6 +105,19 @@ class MainDialog extends ComponentDialog {
 
         // We can send messages to the user at any point in the WaterfallStep.
         await step.context.sendActivity(`Thanks ${ step.values.name } and your email id is ${ step.values.email }.`);
+        this.payload = {
+            ...this.payload,
+            ...step.values
+        };
+
+        // await callDB.createItem(this.payload);
+        const getDBId = await callDB.createItem({
+            ...this.payload
+        });
+        this.payload = {
+            ...this.payload,
+            id: getDBId.id
+        };
 
         await step.context.sendActivity(`OK! Before we get you started, here are few rules.
         If you wish to start from the beginning, type "Start".
@@ -115,17 +132,26 @@ class MainDialog extends ComponentDialog {
     }
 
     async selectSolizeServices(step) {
-        step.values.service = step.result.value;
+        step.values.serviceDetails = step.result.value;
+
+        this.payload = {
+            ...this.payload,
+            ...step.values
+        };
+
+        await callDB.updateItem({
+            ...this.payload
+        });
 
         switch (step.result.value) {
         case 'Staffing':
-            return await step.beginDialog(STAFFING_DIALOG, { ...step.values });
+            return await step.beginDialog(STAFFING_DIALOG, { ...this.payload });
 
         case 'Feedback':
-            return await step.beginDialog(FEEDBACK_DIALOG, { ...step.values });
+            return await step.beginDialog(FEEDBACK_DIALOG, { ...this.payload });
 
         case 'Other':
-            return await step.beginDialog(CONTACT_DIALOG, { ...step.values });
+            return await step.beginDialog(CONTACT_DIALOG, { ...this.payload });
         }
     }
 }

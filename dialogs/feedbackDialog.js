@@ -21,6 +21,7 @@ const TEAM_WORK_PROMPT = 'TEAM_WORK_PROMPT';
 const OVERALL_PROMPT = 'ANALYTICAL_PROMPT';
 
 const { FEEDBACK_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
+const { callDB } = require('../db/db');
 
 class FeedbackDialog extends ComponentDialog {
     constructor(id, contactDialog) {
@@ -63,7 +64,6 @@ class FeedbackDialog extends ComponentDialog {
      * If a destination city has not been provided, prompt for one.
      */
     async employeeNameStep(stepContext) {
-        stepContext.values.employeeName = stepContext.result;
         const messageText = `Thank your for participating in our Feedback.
         Can you tell us the employee's name?`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
@@ -71,14 +71,24 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async companyNameStep(stepContext) {
-        stepContext.values.companyName = stepContext.result;
+        stepContext.values.employeeName = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = 'Can you tell us the name of your company?';
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
         return await stepContext.prompt(COMPANY_NAME_PROMPT, { prompt: msg });
     }
 
     async timeFrameStep(stepContext) {
-        stepContext.values.timeFrame = stepContext.result;
+        stepContext.values.nameOfCompany = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = `Can you tell us the time frame of 
         which your answers will be based on? (ex. January to February, last quarter, etc.)`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
@@ -86,6 +96,12 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async introStep(stepContext) {
+        stepContext.values.timeframeFeedback = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = `Thanks.
         There will be 5 feedback questions in total, followed by a free comment section.
         Please rate and answer on the employee's skills, competency, and behaviors from range of 1(unsatisfactory) to 4(exceeds expectations).`;
@@ -96,13 +112,19 @@ class FeedbackDialog extends ComponentDialog {
 
     async knowledgeAndCompetenceStep(stepContext) {
         return await stepContext.prompt(KNOWLEDGE_COMPETENCE_PROMPT, {
-            prompt: `<b>Knowledge and Competence</b>
+            prompt: `Knowledge and Competence
             Does the employee show degrees of knowledge & skills necessary for the assigned job duties?`,
             choices: ChoiceFactory.toChoices(this.choices)
         });
     }
 
     async AnalyticalSkillStep(stepContext) {
+        stepContext.values.knowledgeAndCompetence = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         return await stepContext.prompt(ANALYTICAL_PROMPT, {
             prompt: `Analytical Skills
             Does the employee show degrees of skills necessary for solving problems or coming up with alternate solutions? 
@@ -112,6 +134,12 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async selfManagementStep(stepContext) {
+        stepContext.values.analyticsSkills = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         return await stepContext.prompt(ANALYTICAL_PROMPT, {
             prompt: `Self Management
             Does the employee exercise the ability to perform work with 
@@ -121,6 +149,12 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async teamWorkStep(stepContext) {
+        stepContext.values.selfManagement = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         return await stepContext.prompt(ANALYTICAL_PROMPT, {
             prompt: `Teamwork
             Does the employee show degree of cooperation, support and understanding of co-workers, 
@@ -130,6 +164,12 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async overallStep(stepContext) {
+        stepContext.values.teamwork = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         return await stepContext.prompt(ANALYTICAL_PROMPT, {
             prompt: `Overall
             Overall, how would you rate the employee's placement/performance/…?`,
@@ -138,12 +178,24 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async leaveCommentStep(stepContext) {
+        stepContext.values.overall = stepContext.result.value;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         const messageText = 'If you have other comments, please leave us a comment.';
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
         return await stepContext.prompt(LEAVE_COMMENT_PROMPT, { prompt: msg });
     }
 
     async consolationStep(stepContext) {
+        stepContext.values.otherComments = stepContext.result;
+
+        await callDB.updateItem({
+            ...stepContext.options,
+            ...stepContext.values
+        });
         await stepContext.context.sendActivity(`OK! That's all the questions. 
         We'll send you your feedback content in the email you have provided us.`);
         return await stepContext.next();
