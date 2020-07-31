@@ -9,8 +9,6 @@ const restify = require('restify');
 // Import required bot services.
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 const { BotFrameworkAdapter, ConversationState, InputHints, MemoryStorage, UserState } = require('botbuilder');
-const { callDB } = require('./db/db');
-const { SchemaDB } = require('./db/dbschema');
 
 const { LuisRecognizerDialog } = require('./dialogs/luisRegonizerDialog');
 
@@ -29,8 +27,8 @@ const { NoJDDialog } = require('./dialogs/noJDDialog');
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
-    appId: null,
-    appPassword: null
+    appId: process.env.MicrosoftAppId,
+    appPassword: process.env.MicrosoftAppPassword
 });
 
 // Catch-all for errors.
