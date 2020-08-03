@@ -21,14 +21,16 @@ const { FeedbackDialog } = require('./dialogs/feedbackDialog');
 const { StaffingDialog } = require('./dialogs/staffingDialog');
 const { ContactDialog } = require('./dialogs/contactDialog');
 
-const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG } = require('./dialogs/dialogConstants');
+const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG, COMMON_JD_DIALOG, SELECTED_OTHER_DIALOG } = require('./dialogs/dialogConstants');
 const { HasJDDialog } = require('./dialogs/hasJDDialog');
 const { NoJDDialog } = require('./dialogs/noJDDialog');
+const { CommonJDDialog } = require('./dialogs/commonJDDialog');
+const { SelectedOtherDialog } = require('./dialogs/selectedOtherDialog');
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
-    appId: process.env.MicrosoftAppId,
-    appPassword: process.env.MicrosoftAppPassword
+    appId: null,
+    appPassword: null
 });
 
 // Catch-all for errors.
@@ -75,12 +77,14 @@ const luisConfig = { applicationId: LuisAppId, endpointKey: LuisAPIKey, endpoint
 const luisRecognizer = new LuisRecognizerDialog(luisConfig);
 
 const contactDialog = new ContactDialog(CONTACT_DIALOG);
+const selectedOtherDialog = new SelectedOtherDialog(SELECTED_OTHER_DIALOG, contactDialog);
 // Create the main dialog.
-const noJDDialog = new NoJDDialog(NO_JD_DIALOG);
-const feedbackDialog = new FeedbackDialog(FEEDBACK_DIALOG, contactDialog);
-const hasJDDialog = new HasJDDialog(HAS_JD_DIALOG, contactDialog);
-const staffingDialog = new StaffingDialog(STAFFING_DIALOG, hasJDDialog, contactDialog, noJDDialog);
-const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog);
+const commonJDDialog = new CommonJDDialog(COMMON_JD_DIALOG, contactDialog, selectedOtherDialog);
+const noJDDialog = new NoJDDialog(NO_JD_DIALOG, commonJDDialog);
+const feedbackDialog = new FeedbackDialog(FEEDBACK_DIALOG, contactDialog, selectedOtherDialog);
+const hasJDDialog = new HasJDDialog(HAS_JD_DIALOG, contactDialog, commonJDDialog);
+const staffingDialog = new StaffingDialog(STAFFING_DIALOG, hasJDDialog, contactDialog, noJDDialog, selectedOtherDialog);
+const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog);
 const bot = new DialogAndWelcomeBot(conversationState, userState, dialog);
 
 // Create HTTP server

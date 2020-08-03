@@ -44,7 +44,7 @@ class FeedbackDialog extends ComponentDialog {
             this.companyNameStep.bind(this),
             this.timeFrameStep.bind(this),
             this.introStep.bind(this),
-            this.knowledgeAndCompetenceStep.bind(this),
+            this.KnowledgeAndCompetenceStep.bind(this),
             this.AnalyticalSkillStep.bind(this),
             this.selfManagementStep.bind(this),
             this.teamWorkStep.bind(this),
@@ -56,13 +56,12 @@ class FeedbackDialog extends ComponentDialog {
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
-
-        this.choices = ['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'];
     }
 
     /**
      * If a destination city has not been provided, prompt for one.
      */
+
     async employeeNameStep(stepContext) {
         const messageText = `Thank your for participating in our Feedback.
         Can you tell us the employee's name?`;
@@ -110,11 +109,10 @@ class FeedbackDialog extends ComponentDialog {
         return await stepContext.next();
     }
 
-    async knowledgeAndCompetenceStep(stepContext) {
+    async KnowledgeAndCompetenceStep(stepContext) {
         return await stepContext.prompt(KNOWLEDGE_COMPETENCE_PROMPT, {
-            prompt: `Knowledge and Competence
-            Does the employee show degrees of knowledge & skills necessary for the assigned job duties?`,
-            choices: ChoiceFactory.toChoices(this.choices)
+            prompt: 'Knowledge and Competence Does the employee show degrees of knowledge & skills necessary for the assigned job duties?',
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
         });
     }
 
@@ -129,7 +127,7 @@ class FeedbackDialog extends ComponentDialog {
             prompt: `Analytical Skills
             Does the employee show degrees of skills necessary for solving problems or coming up with alternate solutions? 
             Does the employee exercise the ability to observe, forecast and apply logic?`,
-            choices: ChoiceFactory.toChoices(this.choices)
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
         });
     }
 
@@ -140,11 +138,11 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.options,
             ...stepContext.values
         });
-        return await stepContext.prompt(ANALYTICAL_PROMPT, {
+        return await stepContext.prompt(SELF_MANAGEMENT_PROMPT, {
             prompt: `Self Management
             Does the employee exercise the ability to perform work with 
             minimal supervision, while fulfilling goals, task priorities, and feedback requirements?`,
-            choices: ChoiceFactory.toChoices(this.choices)
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
         });
     }
 
@@ -155,11 +153,11 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.options,
             ...stepContext.values
         });
-        return await stepContext.prompt(ANALYTICAL_PROMPT, {
+        return await stepContext.prompt(TEAM_WORK_PROMPT, {
             prompt: `Teamwork
             Does the employee show degree of cooperation, support and understanding of co-workers, 
             and promotes synergy and a productive environment?`,
-            choices: ChoiceFactory.toChoices(this.choices)
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
         });
     }
 
@@ -170,10 +168,10 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.options,
             ...stepContext.values
         });
-        return await stepContext.prompt(ANALYTICAL_PROMPT, {
+        return await stepContext.prompt(OVERALL_PROMPT, {
             prompt: `Overall
             Overall, how would you rate the employee's placement/performance/…?`,
-            choices: ChoiceFactory.toChoices(this.choices)
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
         });
     }
 

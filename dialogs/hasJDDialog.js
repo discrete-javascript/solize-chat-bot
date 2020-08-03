@@ -10,16 +10,17 @@ const GET_JD_PROMPT = 'GET_JD_PROMPT';
 
 const UPLOAD_PROMPT = 'UPLOAD_PROMPT';
 
-const { CONTACT_DIALOG, HAS_JD_DIALOG } = require('./dialogConstants');
+const { HAS_JD_DIALOG, COMMON_JD_DIALOG } = require('./dialogConstants');
 const { callDB } = require('../db/db');
 
 class HasJDDialog extends ComponentDialog {
-    constructor(id, contactDialog) {
+    constructor(id, contactDialog, commonJDDialog) {
         super(id || HAS_JD_DIALOG);
 
         this.addDialog(new AttachmentPrompt(UPLOAD_PROMPT, this.uploadPromptValidator));
         this.addDialog(new ChoicePrompt(GET_JD_PROMPT));
         this.addDialog(contactDialog);
+        this.addDialog(commonJDDialog);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.uploadJDStep.bind(this),
@@ -45,7 +46,7 @@ class HasJDDialog extends ComponentDialog {
     async printThanksStep(stepContext) {
         await stepContext.context.sendActivity('Thanks! We will look into the job description. ');
         await callDB.updateItem({ ...stepContext.options, uploadFileLink: JSON.stringify(stepContext.result.value) });
-        return stepContext.beginDialog(CONTACT_DIALOG);
+        return stepContext.beginDialog(COMMON_JD_DIALOG, stepContext.options);
     }
 
     async uploadPromptValidator(promptContext) {

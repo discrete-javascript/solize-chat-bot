@@ -15,11 +15,11 @@ const NAME_PROMPT = 'NAME_PROMPT';
 const PHONENUMBER_PROMPT = 'PHONENUMBER_PROMPT';
 
 const { emailValidator, nameValidator, phoneNumberValidator } = require('./validators');
-const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
+const { FEEDBACK_DIALOG, STAFFING_DIALOG, SELECTED_OTHER_DIALOG } = require('./dialogConstants');
 const { SchemaDB } = require('../db/dbschema');
 
 class MainDialog extends ComponentDialog {
-    constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog) {
+    constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog) {
         super('MainDialog');
 
         if (!luisRecognizer) throw new Error('[MainDialog]: Missing parameter \'luisRecognizer\' is required');
@@ -38,6 +38,7 @@ class MainDialog extends ComponentDialog {
         this.addDialog(feedbackDialog);
         this.addDialog(staffingDialog);
         this.addDialog(contactDialog);
+        this.addDialog(selectedOtherDialog);
 
         this.addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
             this.startStep.bind(this),
@@ -151,7 +152,7 @@ class MainDialog extends ComponentDialog {
             return await step.beginDialog(FEEDBACK_DIALOG, { ...this.payload });
 
         case 'Other':
-            return await step.beginDialog(CONTACT_DIALOG, { ...this.payload });
+            return await step.beginDialog(SELECTED_OTHER_DIALOG, { ...this.payload });
         }
     }
 }
