@@ -18,14 +18,14 @@ const { COMMON_JD_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
 const { callDB } = require('../db/db');
 
 class CommonJDDialog extends ComponentDialog {
-    constructor(id, contactDialog) {
+    constructor(id, contactDialog, selectedOtherDialog) {
         super(id || COMMON_JD_DIALOG);
         this.addDialog(new TextPrompt(WORKPLACE_LOCATION));
         this.addDialog(new ChoicePrompt(START_DATE));
         this.addDialog(new TextPrompt(OTHER_REQUIREMENTS));
         this.addDialog(new TextPrompt(PREFERRED_CONTACT_TIME));
         this.addDialog(new TextPrompt(EXTRA_DIALOG_PROMPT));
-        this.addDialog(contactDialog);
+        this.addDialog(selectedOtherDialog);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.workLocationStep.bind(this),

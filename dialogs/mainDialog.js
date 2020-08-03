@@ -111,6 +111,8 @@ class MainDialog extends ComponentDialog {
             ...step.values
         };
 
+        this.payload.id = '';
+
         // await callDB.createItem(this.payload);
         const getDBId = await callDB.createItem({
             ...this.payload

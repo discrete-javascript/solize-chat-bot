@@ -21,11 +21,12 @@ const { FeedbackDialog } = require('./dialogs/feedbackDialog');
 const { StaffingDialog } = require('./dialogs/staffingDialog');
 const { ContactDialog } = require('./dialogs/contactDialog');
 
-const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG, COMMON_JD_DIALOG, SELECTED_OTHER_DIALOG } = require('./dialogs/dialogConstants');
+const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG, COMMON_JD_DIALOG, SELECTED_OTHER_DIALOG, YES_TOGGLE_LIVE } = require('./dialogs/dialogConstants');
 const { HasJDDialog } = require('./dialogs/hasJDDialog');
 const { NoJDDialog } = require('./dialogs/noJDDialog');
 const { CommonJDDialog } = require('./dialogs/commonJDDialog');
 const { SelectedOtherDialog } = require('./dialogs/selectedOtherDialog');
+const { YesToggleSpeakLive } = require('./dialogs/yesToggleSpeakLive');
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
@@ -77,7 +78,8 @@ const luisConfig = { applicationId: LuisAppId, endpointKey: LuisAPIKey, endpoint
 const luisRecognizer = new LuisRecognizerDialog(luisConfig);
 
 const contactDialog = new ContactDialog(CONTACT_DIALOG);
-const selectedOtherDialog = new SelectedOtherDialog(SELECTED_OTHER_DIALOG, contactDialog);
+const yesToggleSpeakLive = new YesToggleSpeakLive(YES_TOGGLE_LIVE, contactDialog);
+const selectedOtherDialog = new SelectedOtherDialog(SELECTED_OTHER_DIALOG, contactDialog, yesToggleSpeakLive);
 // Create the main dialog.
 const commonJDDialog = new CommonJDDialog(COMMON_JD_DIALOG, contactDialog, selectedOtherDialog);
 const noJDDialog = new NoJDDialog(NO_JD_DIALOG, commonJDDialog);

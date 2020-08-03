@@ -3,29 +3,26 @@ const {
     ChoiceFactory,
     TextPrompt
 } = require('botbuilder-dialogs');
-const { InputHints, MessageFactory } = require('botbuilder');
 
 const WATERFALL_DIALOG = 'waterfallDialog';
 
-const { SELECTED_OTHER_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
-const { callDB } = require('../db/db');
+const { SELECTED_OTHER_DIALOG, CONTACT_DIALOG, YES_TOGGLE_LIVE } = require('./dialogConstants');
 
 const CONTACT_LIVE_AGENT = 'CONTACT_LIVE_AGENT';
 const PREFERRED_CONTACT_TIME = 'PREFERRED_CONTACT_TIME';
 
 class SelectedOtherDialog extends ComponentDialog {
-    constructor(id, contactDialog) {
+    constructor(id, contactDialog, yesToggleSpeakLive) {
         super(id || SELECTED_OTHER_DIALOG);
 
         this.addDialog(new ChoicePrompt(CONTACT_LIVE_AGENT));
         this.addDialog(new TextPrompt(PREFERRED_CONTACT_TIME));
         this.addDialog(contactDialog);
+        this.addDialog(yesToggleSpeakLive);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.extraDialogStep.bind(this),
-            this.toggleDialogStep.bind(this),
-            this.replyPreferredContactStep.bind(this),
-            this.replyExtraDialogStep.bind(this)
+            this.toggleDialogStep.bind(this)
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
@@ -44,7 +41,12 @@ class SelectedOtherDialog extends ComponentDialog {
 
         switch (stepContext.values.contact) {
         case 'Yes':
-            return await this.preferredContactStep(stepContext);
+            this.payload = {
+                ...stepContext.options,
+                ...stepContext.values
+            };
+
+            return await stepContext.beginDialog(YES_TOGGLE_LIVE, { ...this.payload });
 
         case 'No':
             this.payload = {
@@ -54,38 +56,6 @@ class SelectedOtherDialog extends ComponentDialog {
 
             return await stepContext.beginDialog(CONTACT_DIALOG, { ...this.payload });
         }
-    }
-
-    async preferredContactStep(stepContext) {
-        stepContext.values.experience = stepContext.result;
-        const messageText = `Do you have any preference on Date and Time for our agent to contact you, if you have provided us your phone number?
-        If you have only provided us your email address, please type "NA".`;
-        const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
-        return await stepContext.prompt(PREFERRED_CONTACT_TIME, { prompt: msg });
-    }
-
-    async replyPreferredContactStep(stepContext) {
-        stepContext.values.preferredContact = stepContext.result;
-
-        await callDB.updateItem({
-            ...stepContext.options,
-            ...stepContext.values
-        });
-
-        this.payload = {
-            ...stepContext.options,
-            ...stepContext.values
-        };
-        await stepContext.context.sendActivity('Great!');
-        return await stepContext.next();
-    }
-
-    async replyExtraDialogStep(stepContext) {
-        this.payload = {
-            ...stepContext.options,
-            ...stepContext.values
-        };
-        return await stepContext.beginDialog(CONTACT_DIALOG, { ...this.payload });
     }
 }
 

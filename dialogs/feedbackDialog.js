@@ -4,7 +4,8 @@ const { InputHints, MessageFactory } = require('botbuilder');
 const {
     ConfirmPrompt, TextPrompt, WaterfallDialog, ComponentDialog,
     ChoiceFactory,
-    ChoicePrompt
+    ChoicePrompt,
+    ListStyle
 } = require('botbuilder-dialogs');
 
 const WATERFALL_DIALOG = 'waterfallDialog';
@@ -20,11 +21,11 @@ const SELF_MANAGEMENT_PROMPT = 'ANALYTICAL_PROMPT';
 const TEAM_WORK_PROMPT = 'TEAM_WORK_PROMPT';
 const OVERALL_PROMPT = 'ANALYTICAL_PROMPT';
 
-const { FEEDBACK_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
+const { FEEDBACK_DIALOG, SELECTED_OTHER_DIALOG } = require('./dialogConstants');
 const { callDB } = require('../db/db');
 
 class FeedbackDialog extends ComponentDialog {
-    constructor(id, contactDialog) {
+    constructor(id, contactDialog, selectedOtherDialog) {
         super(id || FEEDBACK_DIALOG);
 
         this.addDialog(new TextPrompt(EMPLOYEE_NAME_PROMPT));
@@ -37,7 +38,7 @@ class FeedbackDialog extends ComponentDialog {
         this.addDialog(new ChoicePrompt(OVERALL_PROMPT));
         this.addDialog(new TextPrompt(LEAVE_COMMENT_PROMPT));
         this.addDialog(new ConfirmPrompt(FINAL_STEP_PROMPT));
-        this.addDialog(contactDialog);
+        this.addDialog(selectedOtherDialog);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.employeeNameStep.bind(this),
@@ -51,8 +52,7 @@ class FeedbackDialog extends ComponentDialog {
             this.overallStep.bind(this),
             this.leaveCommentStep.bind(this),
             this.consolationStep.bind(this),
-            this.finalStep.bind(this),
-            this.contactStep.bind(this)
+            this.finalStep.bind(this)
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
@@ -103,7 +103,7 @@ class FeedbackDialog extends ComponentDialog {
         });
         const messageText = `Thanks.
         There will be 5 feedback questions in total, followed by a free comment section.
-        Please rate and answer on the employee's skills, competency, and behaviors from range of 1(unsatisfactory) to 4(exceeds expectations).`;
+        Please rate and answer on the employee's skills, competency, and behaviors`;
         console.log(stepContext.values);
         await stepContext.context.sendActivity(messageText);
         return await stepContext.next();
@@ -112,7 +112,8 @@ class FeedbackDialog extends ComponentDialog {
     async KnowledgeAndCompetenceStep(stepContext) {
         return await stepContext.prompt(KNOWLEDGE_COMPETENCE_PROMPT, {
             prompt: 'Knowledge and Competence Does the employee show degrees of knowledge & skills necessary for the assigned job duties?',
-            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
+            style: ListStyle.suggestedAction
         });
     }
 
@@ -127,7 +128,8 @@ class FeedbackDialog extends ComponentDialog {
             prompt: `Analytical Skills
             Does the employee show degrees of skills necessary for solving problems or coming up with alternate solutions? 
             Does the employee exercise the ability to observe, forecast and apply logic?`,
-            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
+            style: ListStyle.suggestedAction
         });
     }
 
@@ -142,7 +144,8 @@ class FeedbackDialog extends ComponentDialog {
             prompt: `Self Management
             Does the employee exercise the ability to perform work with 
             minimal supervision, while fulfilling goals, task priorities, and feedback requirements?`,
-            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
+            style: ListStyle.suggestedAction
         });
     }
 
@@ -157,7 +160,8 @@ class FeedbackDialog extends ComponentDialog {
             prompt: `Teamwork
             Does the employee show degree of cooperation, support and understanding of co-workers, 
             and promotes synergy and a productive environment?`,
-            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
+            style: ListStyle.suggestedAction
         });
     }
 
@@ -171,7 +175,8 @@ class FeedbackDialog extends ComponentDialog {
         return await stepContext.prompt(OVERALL_PROMPT, {
             prompt: `Overall
             Overall, how would you rate the employee's placement/performance/…?`,
-            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory'])
+            choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
+            style: ListStyle.suggestedAction
         });
     }
 
@@ -200,12 +205,11 @@ class FeedbackDialog extends ComponentDialog {
     }
 
     async finalStep(stepContext) {
-        return await stepContext.prompt(FINAL_STEP_PROMPT,
-            'Would you like to talk to a SOL agent about the feedback?', ['yes', 'no']);
-    }
-
-    async contactStep(stepContext) {
-        return await stepContext.beginDialog(CONTACT_DIALOG);
+        this.payload = {
+            ...stepContext.options,
+            ...stepContext.values
+        };
+        return await stepContext.beginDialog(SELECTED_OTHER_DIALOG, { ...this.payload });
     }
 }
 
