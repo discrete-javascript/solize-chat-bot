@@ -19,7 +19,7 @@ const { FEEDBACK_DIALOG, STAFFING_DIALOG, SELECTED_OTHER_DIALOG } = require('./d
 const { SchemaDB } = require('../db/dbschema');
 
 class MainDialog extends ComponentDialog {
-    constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog) {
+    constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog, timer) {
         super('MainDialog');
 
         if (!luisRecognizer) throw new Error('[MainDialog]: Missing parameter \'luisRecognizer\' is required');
@@ -53,6 +53,8 @@ class MainDialog extends ComponentDialog {
         this.payload = new SchemaDB();
 
         this.initialDialogId = MAIN_WATERFALL_DIALOG;
+
+        this.timer = timer;
     }
 
     /**
@@ -82,6 +84,8 @@ class MainDialog extends ComponentDialog {
     async nameStep(step) {
         console.log(step.values, step.result);
         // step.values.transport = step.result.value;
+        this.timer.clear();
+        this.timer.start();
         const promptOptions = { prompt: 'Please enter your name.', retryPrompt: 'Please enter a valid name.' };
         return await step.prompt(NAME_PROMPT, promptOptions);
     }

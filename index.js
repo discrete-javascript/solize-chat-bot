@@ -27,6 +27,10 @@ const { NoJDDialog } = require('./dialogs/noJDDialog');
 const { CommonJDDialog } = require('./dialogs/commonJDDialog');
 const { SelectedOtherDialog } = require('./dialogs/selectedOtherDialog');
 const { YesToggleSpeakLive } = require('./dialogs/yesToggleSpeakLive');
+
+// Timer
+const Timer = require('timer-node');
+
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
@@ -71,13 +75,15 @@ const memoryStorage = new MemoryStorage();
 const conversationState = new ConversationState(memoryStorage);
 const userState = new UserState(memoryStorage);
 
+const timer = new Timer('sol-timer');
+
 // If configured, pass in the FlightBookingRecognizer.  (Defining it externally allows it to be mocked for tests)
 const { LuisAppId, LuisAPIKey, LuisAPIHostName } = process.env;
 const luisConfig = { applicationId: LuisAppId, endpointKey: LuisAPIKey, endpoint: `https://${ LuisAPIHostName }` };
 
 const luisRecognizer = new LuisRecognizerDialog(luisConfig);
 
-const contactDialog = new ContactDialog(CONTACT_DIALOG);
+const contactDialog = new ContactDialog(CONTACT_DIALOG, timer);
 const yesToggleSpeakLive = new YesToggleSpeakLive(YES_TOGGLE_LIVE, contactDialog);
 const selectedOtherDialog = new SelectedOtherDialog(SELECTED_OTHER_DIALOG, contactDialog, yesToggleSpeakLive);
 // Create the main dialog.
@@ -86,8 +92,10 @@ const noJDDialog = new NoJDDialog(NO_JD_DIALOG, commonJDDialog);
 const feedbackDialog = new FeedbackDialog(FEEDBACK_DIALOG, contactDialog, selectedOtherDialog);
 const hasJDDialog = new HasJDDialog(HAS_JD_DIALOG, contactDialog, commonJDDialog);
 const staffingDialog = new StaffingDialog(STAFFING_DIALOG, hasJDDialog, contactDialog, noJDDialog, selectedOtherDialog);
-const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog);
+const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog, timer);
 const bot = new DialogAndWelcomeBot(conversationState, userState, dialog);
+
+// Timer
 
 // Create HTTP server
 const server = restify.createServer();

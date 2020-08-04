@@ -9,7 +9,7 @@ const { callDB } = require('../db/db');
 const EXTRA_DIALOG_PROMPT = 'EXTRA_DIALOG_PROMPT';
 
 class ContactDialog extends ComponentDialog {
-    constructor(id) {
+    constructor(id, timer) {
         super(id || CONTACT_DIALOG);
 
         this.addDialog(new TextPrompt(EXTRA_DIALOG_PROMPT));
@@ -20,6 +20,8 @@ class ContactDialog extends ComponentDialog {
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
+
+        this.timer = timer;
     }
 
     async extraDialogStep(stepContext) {
@@ -33,10 +35,14 @@ class ContactDialog extends ComponentDialog {
 
     async replyExtraDialogStep(stepContext) {
         stepContext.values.extraDialogStep = stepContext.result;
+        this.timer.stop();
+        console.log('this.timer.seconds()', this.timer.seconds());
+        const timeSpent = `${ this.timer.seconds() } seconds`;
 
         await callDB.updateItem({
             ...stepContext.options,
-            ...stepContext.values
+            ...stepContext.values,
+            timeSpent
         });
         return await stepContext.context.sendActivity(`OK! Thank you ${ stepContext.options.name }. Have a great day!`);
     }

@@ -16,6 +16,7 @@ const EXTRA_DIALOG_PROMPT = 'EXTRA_DIALOG_PROMPT';
 
 const { COMMON_JD_DIALOG, CONTACT_DIALOG } = require('./dialogConstants');
 const { callDB } = require('../db/db');
+const { dateValidator } = require('./validators');
 
 class CommonJDDialog extends ComponentDialog {
     constructor(id, contactDialog, selectedOtherDialog) {
@@ -23,7 +24,7 @@ class CommonJDDialog extends ComponentDialog {
         this.addDialog(new TextPrompt(WORKPLACE_LOCATION));
         this.addDialog(new ChoicePrompt(START_DATE));
         this.addDialog(new TextPrompt(OTHER_REQUIREMENTS));
-        this.addDialog(new TextPrompt(PREFERRED_CONTACT_TIME));
+        this.addDialog(new TextPrompt(PREFERRED_CONTACT_TIME, dateValidator));
         this.addDialog(new TextPrompt(EXTRA_DIALOG_PROMPT));
         this.addDialog(selectedOtherDialog);
 
@@ -85,11 +86,12 @@ class CommonJDDialog extends ComponentDialog {
     }
 
     async preferredContactStep(stepContext) {
-        stepContext.values.experience = stepContext.result;
         const messageText = `Do you have any preference on Date and Time for our agent to contact you, if you have provided us your phone number?
-        If you have only provided us your email address, please type "NA".`;
-        const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
-        return await stepContext.prompt(PREFERRED_CONTACT_TIME, { prompt: msg });
+        If you have only provided us your email address, please type "NA". Format should like dd/mm/YYYY hh:mm AM/PM`;
+        const retryPrompt = 'Please type in a valid date and time and it should be like dd/mm/YYYY hh:mm AM/PM and should not be older time';
+
+        const promptOptions = { prompt: messageText, retryPrompt: retryPrompt };
+        return await stepContext.prompt(PREFERRED_CONTACT_TIME, promptOptions);
     }
 
     async replyPreferredContactStep(stepContext) {
