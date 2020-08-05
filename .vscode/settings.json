@@ -1,3 +1,4 @@
 {
-    "appService.deploySubpath": "."
+    "appService.deploySubpath": ".",
+    "appService.defaultWebAppToDeploy": "/subscriptions/b8ec1d41-0901-47bf-911a-386e8dce7c13/resourceGroups/solize_bot_group/providers/Microsoft.Web/sites/solize-web-gbot"
 }

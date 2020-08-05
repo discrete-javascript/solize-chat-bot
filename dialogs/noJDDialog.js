@@ -17,11 +17,11 @@ const REQUIRED_SKILLSET = 'REQUIRED_SKILLSET';
 const OTHER_REQUIRED_SKILLSET = 'OTHER_REQUIRED_SKILLSET';
 const TYPING_OTHER_SKILLSET = 'TYPING_OTHER_SKILLSET';
 
-const { NO_JD_DIALOG, COMMON_JD_DIALOG } = require('./dialogConstants');
+const { NO_JD_DIALOG, COMMON_JD_DIALOG, OTHER_SKILLSET_DIALOG } = require('./dialogConstants');
 const { callDB } = require('../db/db');
 
 class NoJDDialog extends ComponentDialog {
-    constructor(id, commonJDDialog) {
+    constructor(id, commonJDDialog, otherSkillsetDialog) {
         super(id || NO_JD_DIALOG);
 
         this.addDialog(new ChoicePrompt(TYPE_OF_ENGINEER));
@@ -34,6 +34,7 @@ class NoJDDialog extends ComponentDialog {
         this.addDialog(new TextPrompt(TYPING_OTHER_SKILLSET));
         this.addDialog(new TextPrompt(OTHER_TYPE_OF_INDUSTRY));
         this.addDialog(commonJDDialog);
+        this.addDialog(otherSkillsetDialog);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.typeofEngineerStep.bind(this),
@@ -42,8 +43,7 @@ class NoJDDialog extends ComponentDialog {
             this.otherTypeofIndustryStep.bind(this),
             this.yearsOfexperienceStep.bind(this),
             this.requiredSkillsetStep.bind(this),
-            this.otherRequiredSkillSetStep.bind(this),
-            this.startCommonDialog.bind(this)
+            this.otherRequiredSkillSetStep.bind(this)
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
@@ -163,14 +163,12 @@ class NoJDDialog extends ComponentDialog {
     async otherRequiredSkillSetStep(stepContext) {
         console.log(typeof stepContext.result, stepContext.result);
         if (stepContext.result.value === 'Other') {
-            const messageText =
-               'Please type in your skillset?';
-            const msg = MessageFactory.text(
-                messageText,
-                messageText,
-                InputHints.ExpectingInput
-            );
-            return await stepContext.prompt(OTHER_REQUIRED_SKILLSET, { prompt: msg });
+            this.payload = {
+                ...stepContext.options,
+                ...stepContext.values
+            };
+
+            return await stepContext.beginDialog(OTHER_SKILLSET_DIALOG, { ...this.payload });
         } else if (stepContext.result.value !== 'Other' && (typeof stepContext.result === 'object')) {
             stepContext.values.extraSkillset = stepContext.result.value;
 
@@ -198,23 +196,6 @@ class NoJDDialog extends ComponentDialog {
             });
             return await stepContext.beginDialog(COMMON_JD_DIALOG, { ...this.payload });
         }
-    }
-
-    async startCommonDialog(stepContext) {
-        if (!Object.prototype.hasOwnProperty.call(stepContext.options, 'extraSkillset')) {
-            stepContext.values.extraSkillset = stepContext.result;
-
-            this.payload = {
-                ...stepContext.options,
-                ...stepContext.values
-            };
-
-            await callDB.updateItem({
-                ...stepContext.options,
-                ...stepContext.values
-            });
-        }
-        return await stepContext.beginDialog(COMMON_JD_DIALOG, { ...this.payload });
     }
 }
 

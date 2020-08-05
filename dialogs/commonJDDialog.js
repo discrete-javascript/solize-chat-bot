@@ -26,14 +26,15 @@ class CommonJDDialog extends ComponentDialog {
         this.addDialog(new TextPrompt(OTHER_REQUIREMENTS));
         this.addDialog(new TextPrompt(PREFERRED_CONTACT_TIME, dateValidator));
         this.addDialog(new TextPrompt(EXTRA_DIALOG_PROMPT));
-        this.addDialog(selectedOtherDialog);
+        this.addDialog(contactDialog);
 
         this.addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
             this.workLocationStep.bind(this),
             this.startDateStep.bind(this),
             this.otherRequirementStep.bind(this),
             this.replyOtherRequirementStep.bind(this),
-            this.preferredContactStep.bind(this)
+            this.preferredContactStep.bind(this),
+            this.replyPreferredContactStep.bind(this)
         ]));
 
         this.initialDialogId = WATERFALL_DIALOG;

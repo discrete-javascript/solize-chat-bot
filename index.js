@@ -21,7 +21,7 @@ const { FeedbackDialog } = require('./dialogs/feedbackDialog');
 const { StaffingDialog } = require('./dialogs/staffingDialog');
 const { ContactDialog } = require('./dialogs/contactDialog');
 
-const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG, COMMON_JD_DIALOG, SELECTED_OTHER_DIALOG, YES_TOGGLE_LIVE } = require('./dialogs/dialogConstants');
+const { FEEDBACK_DIALOG, STAFFING_DIALOG, CONTACT_DIALOG, HAS_JD_DIALOG, NO_JD_DIALOG, COMMON_JD_DIALOG, SELECTED_OTHER_DIALOG, YES_TOGGLE_LIVE, OTHER_SKILLSET_DIALOG } = require('./dialogs/dialogConstants');
 const { HasJDDialog } = require('./dialogs/hasJDDialog');
 const { NoJDDialog } = require('./dialogs/noJDDialog');
 const { CommonJDDialog } = require('./dialogs/commonJDDialog');
@@ -30,12 +30,13 @@ const { YesToggleSpeakLive } = require('./dialogs/yesToggleSpeakLive');
 
 // Timer
 const Timer = require('timer-node');
+const { OtherSkillset } = require('./dialogs/otherSkillsetDialog');
 
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
-    appId: null,
-    appPassword: null
+    appId: process.env.MicrosoftAppId,
+    appPassword: process.env.MicrosoftAppPassword
 });
 
 // Catch-all for errors.
@@ -88,11 +89,12 @@ const yesToggleSpeakLive = new YesToggleSpeakLive(YES_TOGGLE_LIVE, contactDialog
 const selectedOtherDialog = new SelectedOtherDialog(SELECTED_OTHER_DIALOG, contactDialog, yesToggleSpeakLive);
 // Create the main dialog.
 const commonJDDialog = new CommonJDDialog(COMMON_JD_DIALOG, contactDialog, selectedOtherDialog);
-const noJDDialog = new NoJDDialog(NO_JD_DIALOG, commonJDDialog);
+const otherSkillsetDialog = new OtherSkillset(OTHER_SKILLSET_DIALOG, commonJDDialog);
+const noJDDialog = new NoJDDialog(NO_JD_DIALOG, commonJDDialog, otherSkillsetDialog);
 const feedbackDialog = new FeedbackDialog(FEEDBACK_DIALOG, contactDialog, selectedOtherDialog);
 const hasJDDialog = new HasJDDialog(HAS_JD_DIALOG, contactDialog, commonJDDialog);
 const staffingDialog = new StaffingDialog(STAFFING_DIALOG, hasJDDialog, contactDialog, noJDDialog, selectedOtherDialog);
-const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog, timer);
+const dialog = new MainDialog(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog, timer, memoryStorage);
 const bot = new DialogAndWelcomeBot(conversationState, userState, dialog);
 
 // Timer

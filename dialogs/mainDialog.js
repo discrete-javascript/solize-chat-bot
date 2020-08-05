@@ -17,9 +17,10 @@ const PHONENUMBER_PROMPT = 'PHONENUMBER_PROMPT';
 const { emailValidator, nameValidator, phoneNumberValidator } = require('./validators');
 const { FEEDBACK_DIALOG, STAFFING_DIALOG, SELECTED_OTHER_DIALOG } = require('./dialogConstants');
 const { SchemaDB } = require('../db/dbschema');
+const moment = require('moment');
 
 class MainDialog extends ComponentDialog {
-    constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog, timer) {
+    constructor(luisRecognizer, feedbackDialog, staffingDialog, contactDialog, selectedOtherDialog, timer, memoryStorage) {
         super('MainDialog');
 
         if (!luisRecognizer) throw new Error('[MainDialog]: Missing parameter \'luisRecognizer\' is required');
@@ -55,6 +56,8 @@ class MainDialog extends ComponentDialog {
         this.initialDialogId = MAIN_WATERFALL_DIALOG;
 
         this.timer = timer;
+
+        this.memoryStorage = memoryStorage;
     }
 
     /**
@@ -82,6 +85,7 @@ class MainDialog extends ComponentDialog {
     }
 
     async nameStep(step) {
+        this.memoryStorage.delete('DialogState');
         console.log(step.values, step.result);
         // step.values.transport = step.result.value;
         this.timer.clear();
@@ -115,16 +119,22 @@ class MainDialog extends ComponentDialog {
             ...step.values
         };
 
+        console.log(this.payload);
         this.payload.id = '';
+        const createdAt = moment().format('DD/MM/YYYY');
 
         // await callDB.createItem(this.payload);
         const getDBId = await callDB.createItem({
-            ...this.payload
+            ...this.payload,
+            createdAt
         });
+
         this.payload = {
             ...this.payload,
             id: getDBId.id
         };
+
+        console.log(this.payload);
 
         await step.context.sendActivity(`OK! Before we get you started, here are few rules.
         If you wish to start from the beginning, type "Start".
