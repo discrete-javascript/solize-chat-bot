@@ -111,7 +111,8 @@ class FeedbackDialog extends ComponentDialog {
 
     async KnowledgeAndCompetenceStep(stepContext) {
         return await stepContext.prompt(KNOWLEDGE_COMPETENCE_PROMPT, {
-            prompt: 'Knowledge and Competence Does the employee show degrees of knowledge & skills necessary for the assigned job duties?',
+            prompt: '**1. Knowledge and Competence** \n Does the employee show degrees of knowledge & skills necessary for the assigned job duties?',
+            retryPrompt: 'Please select answers from below',
             choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
             style: ListStyle.suggestedAction
         });
@@ -125,9 +126,8 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.values
         });
         return await stepContext.prompt(ANALYTICAL_PROMPT, {
-            prompt: `Analytical Skills
-            Does the employee show degrees of skills necessary for solving problems or coming up with alternate solutions? 
-            Does the employee exercise the ability to observe, forecast and apply logic?`,
+            prompt: '**2. Analytical Skills** \n Does the employee show degrees of skills necessary for solving problems or coming up with alternate solutions? \n Does the employee exercise the ability to observe, forecast and apply logic?',
+            retryPrompt: 'Please select answers from below',
             choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
             style: ListStyle.suggestedAction
         });
@@ -141,9 +141,9 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.values
         });
         return await stepContext.prompt(SELF_MANAGEMENT_PROMPT, {
-            prompt: `Self Management
-            Does the employee exercise the ability to perform work with 
-            minimal supervision, while fulfilling goals, task priorities, and feedback requirements?`,
+            prompt: '**3. Self Management** \n' +
+            'Does the employee exercise the ability to perform work with minimal supervision, while fulfilling goals, task priorities, and feedback requirements?',
+            retryPrompt: 'Please select answers from below',
             choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
             style: ListStyle.suggestedAction
         });
@@ -157,9 +157,10 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.values
         });
         return await stepContext.prompt(TEAM_WORK_PROMPT, {
-            prompt: `Teamwork
-            Does the employee show degree of cooperation, support and understanding of co-workers, 
-            and promotes synergy and a productive environment?`,
+            prompt: '**4. Teamwork**' +
+            'Does the employee show degree of cooperation, support and understanding of co-workers, ' +
+            'and promotes synergy and a productive environment?',
+            retryPrompt: 'Please select answers from below',
             choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
             style: ListStyle.suggestedAction
         });
@@ -173,8 +174,9 @@ class FeedbackDialog extends ComponentDialog {
             ...stepContext.values
         });
         return await stepContext.prompt(OVERALL_PROMPT, {
-            prompt: `Overall
-            Overall, how would you rate the employee's placement/performance/…?`,
+            prompt: '**5. Overall*** \n' +
+            'Overall, how would you rate the employee\'s placement/performance/…?',
+            retryPrompt: 'Please select answers from below',
             choices: ChoiceFactory.toChoices(['Exceeeds Expectations', 'Meets Standards', 'Needs Improvement', 'Unsatisfactory']),
             style: ListStyle.suggestedAction
         });
