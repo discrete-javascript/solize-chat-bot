@@ -104,7 +104,7 @@ class MainDialog extends ComponentDialog {
     async phoneNumberStep(step) {
         step.values.email = step.result;
         console.log(step.values);
-        const promptOptions = { prompt: 'Please enter your phone number.', retryPrompt: 'Please enter a valid phone number.' };
+        const promptOptions = { prompt: 'Please enter your phone number. \n\n Format can be +1 1234567890, +11234567890, 1234567890, 123-456-7890, +1 123-456-7890, +1123-456-7890', retryPrompt: 'Please enter a valid phone number.' };
         return await step.prompt(PHONENUMBER_PROMPT, promptOptions);
     }
 

@@ -11,7 +11,7 @@ const nameValidator = async (promptContext) => {
 };
 
 const phoneNumberValidator = async (promptContext) => {
-    var regex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+    var regex = /([+]?\d{1,3}[.-\s]?)?(\d{3}[.-]?){2}\d{4}/g;
     return promptContext.recognized.succeeded && regex.test(promptContext.recognized.value);
 };
 

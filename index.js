@@ -42,8 +42,8 @@ const { WriteJDDialog } = require('./dialogs/writeJDDialog');
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
 const adapter = new BotFrameworkAdapter({
-    appId: process.env.MicrosoftAppId,
-    appPassword: process.env.MicrosoftAppPassword
+    appId: null,
+    appPassword: null
 });
 
 // Catch-all for errors.
