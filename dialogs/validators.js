@@ -18,7 +18,7 @@ const phoneNumberValidator = async (promptContext) => {
 const dateValidator = async (promptContext) => {
     return promptContext.recognized.succeeded &&
     moment(promptContext.recognized.value, 'D/M/YYYY h:mm a').isValid() &&
-    moment(promptContext.recognized.value).isAfter(new Date(), 'minute');
+    (moment(promptContext.recognized.value).unix() > moment().unix());
 };
 
 module.exports = { emailValidator, nameValidator, phoneNumberValidator, dateValidator };
